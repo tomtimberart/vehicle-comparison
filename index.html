@@ -284,7 +284,14 @@ function calcVehicle(v) {
   for(let y=0;y<g.holdYears;y++) cv*=(1-v.depreciation/100);
   const totalDepreciation = v.price - cv;
   const totalCost = annualOp*g.holdYears + totalFinancing + totalDepreciation;
-  return {annualOp, totalOp:annualOp*g.holdYears, totalFinancing, monthlyPayment, loan, totalDepreciation, saleValue:cv, totalCost, annualTotal:totalCost/g.holdYears};
+  let remainingLoan = 0;
+  if(v.financing && loan > 0 && g.holdYears < term) {
+    const remainingPayments = (term - g.holdYears) * 12;
+    const r = (rate/100)/12;
+    remainingLoan = r === 0 ? monthlyPayment * remainingPayments : monthlyPayment * (1 - Math.pow(1+r, -remainingPayments)) / r;
+    remainingLoan = Math.max(0, remainingLoan);
+  }
+  return {annualOp, totalOp:annualOp*g.holdYears, totalFinancing, monthlyPayment, loan, totalDepreciation, saleValue:cv, totalCost, annualTotal:totalCost/g.holdYears, walkAway:cv - remainingLoan};
 }
 
 function renderVehicles() {
@@ -382,17 +389,28 @@ function renderCompare() {
   }
   const maxTotal=Math.max(...calcs.map(x=>x.c.totalCost));
   const minTotal=Math.min(...calcs.map(x=>x.c.totalCost));
+  const maxSale=Math.max(...calcs.map(x=>x.c.saleValue));
+  const minSale=Math.min(...calcs.map(x=>x.c.saleValue));
+  const maxWalk=Math.max(...calcs.map(x=>x.c.walkAway));
+  const minWalk=Math.min(...calcs.map(x=>x.c.walkAway));
 
   document.getElementById('summaryCards').innerHTML=calcs.map((x,i)=>{
     const {v,c}=x, color=COLORS[i%COLORS.length];
     const best=c.totalCost===minTotal;
+    const multi=calcs.length>1;
+    const saleColor=multi?(c.saleValue===maxSale?'#10b981':c.saleValue===minSale?'#ef4444':'var(--muted)'):'var(--muted)';
+    const walkColor=multi?(c.walkAway===maxWalk?'#10b981':c.walkAway===minWalk?'#ef4444':'var(--text)'):'var(--text)';
     return `<div class="summary-card" style="border-top:3px solid ${color}">
       <div class="sc-name">🚗 ${v.name}</div>
       <div class="sc-total" style="color:${color}">₪${fmt(c.totalCost)}</div>
       <div class="sc-sub">עלות כוללת ל-${g.holdYears} שנים</div>
       <div class="sc-sub">₪${fmt(c.annualTotal)} לשנה &nbsp;|&nbsp; ₪${fmt(c.annualTotal/12)} לחודש</div>
-      <div class="sc-sub">ערך במכירה: ₪${fmt(c.saleValue)}</div>
-      ${best&&calcs.length>1?'<span class="badge badge-green">✓ הזול ביותר</span>':''}
+      <div class="sc-sub">ערך במכירה: <span style="color:${saleColor};font-weight:700">₪${fmt(c.saleValue)}</span></div>
+      ${best&&multi?'<span class="badge badge-green">✓ הזול ביותר</span>':''}
+      <div style="border-top:1px solid var(--border);margin-top:10px;padding-top:10px">
+        <div class="sc-sub">כסף שיישאר בידי לאחר מכירה</div>
+        <div style="font-size:20px;font-weight:800;font-family:'Space Mono',monospace;margin-top:4px;color:${walkColor}">₪${fmt(c.walkAway)}</div>
+      </div>
     </div>`;
   }).join('');
 
