@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>השוואת רכבים</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700;800;900&family=Space+Mono:wght@400;700&display=swap');
+  :root {
+    --bg: #0a0d12; --surface: #111520; --surface2: #171d2e;
+    --border: #1e2a42; --accent: #3b82f6; --accent2: #f59e0b;
+    --accent3: #10b981; --danger: #ef4444;
+    --text: #e8edf8; --muted: #6b7a9a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; direction: rtl; }
+  .header { background: #0f1828; border-bottom: 1px solid var(--border); padding: 18px 28px; display: flex; align-items: center; gap: 14px; }
+  .header-icon { width: 42px; height: 42px; background: linear-gradient(135deg,#3b82f6,#6366f1); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+  .header h1 { font-size: 20px; font-weight: 800; }
+  .header p { color: var(--muted); font-size: 12px; margin-top: 2px; }
+  .container { max-width: 1380px; margin: 0 auto; padding: 22px 22px; }
+  .tabs { display: flex; gap: 4px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 4px; margin-bottom: 22px; width: fit-content; }
+  .tab { padding: 7px 18px; border-radius: 7px; border: none; background: transparent; color: var(--muted); font-family: 'Heebo',sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+  .tab.active { background: var(--accent); color: white; }
+  .vehicles-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(320px,1fr)); gap: 18px; margin-bottom: 28px; }
+  .vehicle-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; transition: border-color 0.2s; }
+  .vehicle-card:hover { border-color: var(--accent); }
+  .card-header { background: var(--surface2); padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); }
+  .vehicle-name-input { background: transparent; border: none; color: var(--text); font-family: 'Heebo',sans-serif; font-size: 16px; font-weight: 700; width: 190px; outline: none; text-align: right; }
+  .vehicle-name-input::placeholder { color: var(--muted); }
+  .remove-btn { background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.25); color: var(--danger); border-radius: 7px; width: 28px; height: 28px; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; }
+  .remove-btn:hover { background: rgba(239,68,68,0.25); }
+  .card-body { padding: 16px 18px; }
+  .section-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--accent); margin: 14px 0 9px; display: flex; align-items: center; gap: 5px; }
+  .section-label:first-child { margin-top: 0; }
+  .field-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 7px; }
+  .field-label { font-size: 12px; color: var(--muted); flex: 1; }
+  .field-input-wrap { display: flex; align-items: center; gap: 3px; background: var(--bg); border: 1px solid var(--border); border-radius: 7px; padding: 5px 9px; width: 150px; transition: border-color 0.2s; }
+  .field-input-wrap:focus-within { border-color: var(--accent); }
+  .field-input { background: transparent; border: none; color: var(--text); font-family: 'Space Mono',monospace; font-size: 12px; width: 100%; text-align: left; outline: none; }
+  .unit { color: var(--muted); font-size: 10px; white-space: nowrap; }
+  .add-vehicle-btn { background: var(--surface); border: 2px dashed var(--border); border-radius: 14px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; cursor: pointer; padding: 36px; transition: all 0.2s; color: var(--muted); font-family: 'Heebo',sans-serif; font-size: 14px; min-height: 180px; }
+  .add-vehicle-btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(59,130,246,0.04); }
+  .financing-section { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px 22px; margin-bottom: 22px; }
+  .financing-title { font-size: 14px; font-weight: 700; margin-bottom: 14px; }
+  .financing-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(200px,1fr)); gap: 12px; }
+  .fin-field label { display: block; font-size: 11px; color: var(--muted); margin-bottom: 5px; }
+  .fin-field .field-input-wrap { width: 100%; }
+  .action-bar { display: flex; gap: 10px; margin-bottom: 22px; flex-wrap: wrap; }
+  .btn-primary { background: var(--accent); color: white; border: none; border-radius: 9px; padding: 9px 18px; font-family: 'Heebo',sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; }
+  .btn-primary:hover { background: #2563eb; }
+  .btn-secondary { background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 9px; padding: 9px 18px; font-family: 'Heebo',sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+  .summary-cards { display: grid; grid-template-columns: repeat(auto-fill,minmax(240px,1fr)); gap: 14px; margin-bottom: 22px; }
+  .summary-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; }
+  .sc-name { font-size: 10px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+  .sc-total { font-size: 24px; font-weight: 800; font-family: 'Space Mono',monospace; margin: 5px 0 2px; }
+  .sc-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .badge { display: inline-block; padding: 2px 7px; border-radius: 100px; font-size: 10px; font-weight: 700; margin-top: 6px; }
+  .badge-green { background: rgba(16,185,129,0.15); color: var(--accent3); }
+  .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 22px; }
+  .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px 22px; }
+  .chart-title { font-size: 13px; font-weight: 700; margin-bottom: 14px; }
+  .bar-chart { display: flex; flex-direction: column; gap: 9px; }
+  .bar-row { display: flex; align-items: center; gap: 9px; }
+  .bar-name { font-size: 11px; width: 90px; text-align: right; }
+  .bar-track { flex: 1; height: 26px; background: var(--bg); border-radius: 5px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 5px; display: flex; align-items: center; padding: 0 7px; font-size: 10px; font-weight: 700; font-family: 'Space Mono',monospace; color: white; transition: width 0.6s; white-space: nowrap; justify-content: flex-end; }
+  .comparison-section { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; margin-bottom: 22px; }
+  .comparison-title { padding: 16px 22px; border-bottom: 1px solid var(--border); font-size: 14px; font-weight: 700; }
+  .comp-table { width: 100%; border-collapse: collapse; }
+  .comp-table th { background: var(--surface2); padding: 10px 14px; font-size: 12px; font-weight: 700; text-align: right; border-bottom: 1px solid var(--border); }
+  .comp-table th:first-child { width: 180px; }
+  .comp-table td { padding: 9px 14px; font-size: 12px; border-bottom: 1px solid rgba(30,42,66,0.4); font-family: 'Space Mono',monospace; text-align: right; }
+  .comp-table .row-label { color: var(--muted); font-family: 'Heebo',sans-serif; font-weight: 500; text-align: right; }
+  .comp-table .section-row td { background: rgba(59,130,246,0.05); color: var(--accent); font-family: 'Heebo',sans-serif; font-weight: 700; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; padding: 7px 14px; }
+  .comp-table .total-row td { background: var(--surface2); font-weight: 700; font-size: 13px; border-top: 2px solid var(--border); }
+  .best { color: #10b981 !important; }
+  .worst { color: #ef4444 !important; }
+  .dep-canvas { width: 100%; height: 220px; }
+  .empty-state { text-align: center; padding: 50px; color: var(--muted); }
+  @media(max-width:768px) { .charts-row { grid-template-columns:1fr; } .vehicles-grid { grid-template-columns:1fr; } }
+  /* Save/Load UI */
+  .save-bar { display:flex; align-items:center; gap:10px; background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:10px 16px; margin-bottom:22px; flex-wrap:wrap; }
+  .save-bar-label { font-size:12px; color:var(--muted); font-weight:600; margin-left:auto; }
+  .btn-save { background:rgba(16,185,129,0.15); color:#10b981; border:1px solid rgba(16,185,129,0.3); border-radius:8px; padding:7px 14px; font-family:'Heebo',sans-serif; font-size:12px; font-weight:700; cursor:pointer; transition:all 0.2s; }
+  .btn-save:hover { background:rgba(16,185,129,0.28); }
+  .btn-load { background:rgba(59,130,246,0.12); color:var(--accent); border:1px solid rgba(59,130,246,0.28); border-radius:8px; padding:7px 14px; font-family:'Heebo',sans-serif; font-size:12px; font-weight:700; cursor:pointer; transition:all 0.2s; }
+  .btn-load:hover { background:rgba(59,130,246,0.22); }
+  .btn-export { background:rgba(245,158,11,0.12); color:#f59e0b; border:1px solid rgba(245,158,11,0.28); border-radius:8px; padding:7px 14px; font-family:'Heebo',sans-serif; font-size:12px; font-weight:700; cursor:pointer; transition:all 0.2s; }
+  .btn-export:hover { background:rgba(245,158,11,0.22); }
+  .save-slots { display:flex; gap:6px; flex-wrap:wrap; }
+  .slot-btn { background:var(--surface2); border:1px solid var(--border); border-radius:6px; padding:5px 10px; font-family:'Heebo',sans-serif; font-size:11px; color:var(--muted); cursor:pointer; transition:all 0.2s; position:relative; }
+  .slot-btn.filled { border-color:var(--accent); color:var(--text); }
+  .slot-btn:hover { border-color:var(--accent); }
+  .toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:#10b981; color:white; font-family:'Heebo',sans-serif; font-size:13px; font-weight:700; padding:10px 22px; border-radius:10px; z-index:999; opacity:0; transition:opacity 0.3s; pointer-events:none; }
+  .toast.show { opacity:1; }
+  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:500; align-items:center; justify-content:center; }
+  .modal-overlay.open { display:flex; }
+  .modal { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:24px; width:360px; }
+  .modal h3 { font-size:16px; font-weight:800; margin-bottom:16px; }
+  .modal-slots { display:flex; flex-direction:column; gap:8px; margin-bottom:18px; }
+  .modal-slot { display:flex; align-items:center; justify-content:space-between; background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:10px 14px; cursor:pointer; transition:all 0.2s; }
+  .modal-slot:hover { border-color:var(--accent); }
+  .modal-slot .slot-name { font-size:13px; font-weight:600; }
+  .modal-slot .slot-meta { font-size:11px; color:var(--muted); }
+  .modal-slot .slot-del { background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.25); color:var(--danger); border-radius:5px; width:22px; height:22px; display:flex; align-items:center; justify-content:center; font-size:12px; cursor:pointer; }
+  .modal-slot .slot-del:hover { background:rgba(239,68,68,0.28); }
+  .modal-btn-row { display:flex; gap:8px; justify-content:flex-end; }
+  .modal-cancel { background:var(--surface2); border:1px solid var(--border); color:var(--muted); border-radius:8px; padding:7px 16px; font-family:'Heebo',sans-serif; font-size:13px; cursor:pointer; }
+  .modal-new-save { display:flex; gap:8px; margin-bottom:14px; }
+  .modal-new-save input { flex:1; background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:7px 10px; color:var(--text); font-family:'Heebo',sans-serif; font-size:13px; outline:none; text-align:right; }
+  .modal-new-save input:focus { border-color:var(--accent); }
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-icon">🚗</div>
+  <div>
+    <h1>השוואת רכבים</h1>
+    <p>ניתוח עלויות מלא — רכישה, החזקה, מימון וירידת ערך</p>
+  </div>
+</div>
+<div class="container">
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('input')">📋 הזנת נתונים</button>
+    <button class="tab" onclick="switchTab('compare')">📊 השוואה</button>
+    <button class="tab" onclick="switchTab('depreciation')">📉 ירידת ערך</button>
+  </div>
+
+  <!-- Save Bar -->
+  <div class="save-bar">
+    <button class="btn-save" onclick="openSaveModal()">💾 שמור נתונים</button>
+    <button class="btn-load" onclick="openLoadModal()">📂 טען שמירה</button>
+    <button class="btn-export" onclick="exportJSON()">⬇ ייצא JSON</button>
+    <label class="btn-export" style="cursor:pointer">⬆ ייבא JSON<input type="file" accept=".json" onchange="importJSON(event)" style="display:none"></label>
+    <span class="save-bar-label" id="saveBarStatus">לא נשמר</span>
+  </div>
+
+  <!-- Save Modal -->
+  <div class="modal-overlay" id="saveModal">
+    <div class="modal">
+      <h3>💾 שמור השוואה</h3>
+      <div class="modal-new-save">
+        <input type="text" id="saveNameInput" placeholder="שם לשמירה (למשל: רכב משפחתי)" maxlength="40">
+        <button class="btn-save" onclick="doSave()">שמור</button>
+      </div>
+      <div id="existingSlotsContainer"></div>
+      <div class="modal-btn-row"><button class="modal-cancel" onclick="closeModals()">ביטול</button></div>
+    </div>
+  </div>
+
+  <!-- Load Modal -->
+  <div class="modal-overlay" id="loadModal">
+    <div class="modal">
+      <h3>📂 טען שמירה</h3>
+      <div class="modal-slots" id="loadSlots"></div>
+      <div class="modal-btn-row"><button class="modal-cancel" onclick="closeModals()">ביטול</button></div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <div id="tab-input">
+    <div class="action-bar">
+      <button class="btn-primary" onclick="addVehicle()">＋ הוסף רכב</button>
+      <button class="btn-secondary" onclick="loadSample()">📎 טען דוגמה</button>
+    </div>
+    <div class="vehicles-grid" id="vehiclesGrid"></div>
+    <div class="financing-section">
+      <div class="financing-title">💳 הגדרות מימון</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+        <input type="checkbox" id="perCarFinancing" onchange="toggleFinancingMode()" style="width:15px;height:15px;accent-color:var(--accent)">
+        <label for="perCarFinancing" style="font-size:13px;cursor:pointer">מימון נפרד לכל רכב</label>
+      </div>
+      <div class="financing-grid">
+        <div class="fin-field" id="gf-rate"><label>ריבית שנתית (%)</label><div class="field-input-wrap"><input class="field-input" type="number" id="globalRate" value="5.5" step="0.1" oninput="recalc()"><span class="unit">%</span></div></div>
+        <div class="fin-field" id="gf-term"><label>תקופת מימון (שנים)</label><div class="field-input-wrap"><input class="field-input" type="number" id="globalTerm" value="5" min="1" max="10" oninput="recalc()"><span class="unit">שנים</span></div></div>
+        <div class="fin-field" id="gf-down"><label>מקדמה (₪)</label><div class="field-input-wrap"><input class="field-input" type="number" id="globalDown" value="40000" min="0" oninput="recalc()"><span class="unit">₪</span></div></div>
+        <div class="fin-field"><label>שנות החזקה להשוואה</label><div class="field-input-wrap"><input class="field-input" type="number" id="holdYears" value="5" min="1" max="15" oninput="recalc()"><span class="unit">שנים</span></div></div>
+      </div>
+    </div>
+    <button class="btn-primary" onclick="switchTab('compare')">📊 צפה בהשוואה →</button>
+  </div>
+
+  <div id="tab-compare" style="display:none">
+    <div id="summaryCards" class="summary-cards"></div>
+    <div class="charts-row">
+      <div class="chart-card"><div class="chart-title">💸 עלות כוללת לתקופה</div><div class="bar-chart" id="totalCostChart"></div></div>
+      <div class="chart-card"><div class="chart-title">🔧 עלויות תפעוליות שנתיות</div><div class="bar-chart" id="annualBreakChart"></div></div>
+    </div>
+    <div class="comparison-section">
+      <div class="comparison-title">🗂 טבלת השוואה מפורטת</div>
+      <div style="overflow-x:auto"><table class="comp-table" id="compTable"></table></div>
+    </div>
+  </div>
+
+  <div id="tab-depreciation" style="display:none">
+    <div class="chart-card" style="margin-bottom:22px">
+      <div class="chart-title">📉 ירידת ערך לאורך השנים</div>
+      <canvas id="depCanvas" class="dep-canvas"></canvas>
+    </div>
+    <div class="comparison-section">
+      <div class="comparison-title">📋 טבלת ערך לפי שנה</div>
+      <div style="overflow-x:auto"><table class="comp-table" id="depTable"></table></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const COLORS = ['#3b82f6','#f59e0b','#10b981','#a855f7','#ef4444','#06b6d4'];
+let vehicles = [], nextId = 1;
+const fmt = n => Math.round(n).toLocaleString('he-IL');
+
+function getGlobal() {
+  return {
+    rate: parseFloat(document.getElementById('globalRate').value)||5.5,
+    term: parseInt(document.getElementById('globalTerm').value)||5,
+    downPct: parseFloat(document.getElementById('globalDown').value)||40000,
+    holdYears: parseInt(document.getElementById('holdYears').value)||5
+  };
+}
+
+function addVehicle(data) {
+  const id = nextId++;
+  const v = data ? {...data, id} : {id, name:'רכב '+id, price:200000, fuel:700, maintenance:3000, repairs:1500, insurance:4000, registration:1200, depreciation:15, financing:true, rate:5.5, term:5, down:40000};
+  vehicles.push(v);
+  renderVehicles();
+  recalc();
+}
+
+function removeVehicle(id) {
+  vehicles = vehicles.filter(v=>v.id!==id);
+  renderVehicles(); recalc();
+}
+
+function getVehicleData(id) {
+  const g = f => parseFloat(document.getElementById('v'+id+'_'+f)?.value)||0;
+  const s = f => document.getElementById('v'+id+'_'+f)?.value||'';
+  const rateEl = document.getElementById('v'+id+'_rate');
+  const termEl = document.getElementById('v'+id+'_term');
+  const downEl = document.getElementById('v'+id+'_down');
+  return {
+    id, name:s('name'), price:g('price'),
+    fuel:g('fuel'), maintenance:g('maintenance'), repairs:g('repairs'),
+    insurance:g('insurance'), registration:g('registration'),
+    depreciation:g('depreciation'),
+    financing:document.getElementById('v'+id+'_financing')?.checked,
+    rate: rateEl ? (parseFloat(rateEl.value)||5.5) : undefined,
+    term: termEl ? (parseInt(termEl.value)||5) : undefined,
+    down: downEl ? parseFloat(downEl.value) : undefined,
+  };
+}
+
+function calcVehicle(v) {
+  const g = getGlobal();
+  const perCar = document.getElementById('perCarFinancing')?.checked;
+  const rate = (perCar && v.rate != null) ? v.rate : g.rate;
+  const term = (perCar && v.term != null) ? v.term : g.term;
+  const down = (perCar && v.down != null) ? v.down : g.downPct;
+  const annualOp = v.fuel*12 + v.maintenance + v.repairs + v.insurance + v.registration;
+  let totalFinancing=0, monthlyPayment=0;
+  const loan = v.financing ? Math.max(0, v.price - down) : 0;
+  if(v.financing && loan > 0) {
+    const r = (rate/100)/12, n = term*12;
+    monthlyPayment = r===0 ? loan/n : loan*r*Math.pow(1+r,n)/(Math.pow(1+r,n)-1);
+    totalFinancing = monthlyPayment*n - loan;
+  }
+  let cv = v.price;
+  for(let y=0;y<g.holdYears;y++) cv*=(1-v.depreciation/100);
+  const totalDepreciation = v.price - cv;
+  const totalCost = annualOp*g.holdYears + totalFinancing + totalDepreciation;
+  return {annualOp, totalOp:annualOp*g.holdYears, totalFinancing, monthlyPayment, loan, totalDepreciation, saleValue:cv, totalCost, annualTotal:totalCost/g.holdYears};
+}
+
+function renderVehicles() {
+  const grid = document.getElementById('vehiclesGrid');
+  grid.innerHTML = '';
+  const perCarMode = document.getElementById('perCarFinancing')?.checked;
+  vehicles.forEach((v,idx)=>{
+    const color = COLORS[idx%COLORS.length];
+    const card = document.createElement('div');
+    card.className = 'vehicle-card';
+    card.style.borderTop = '3px solid '+color;
+    card.innerHTML = `
+      <div class="card-header">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:24px">🚗</span>
+          <input class="vehicle-name-input" id="v${v.id}_name" value="${v.name}" placeholder="שם הרכב" oninput="recalc()">
+        </div>
+        <button class="remove-btn" onclick="removeVehicle(${v.id})">✕</button>
+      </div>
+      <div class="card-body">
+        <div class="section-label">💰 רכישה</div>
+        ${fr(v.id,'price','מחיר רכישה',v.price,'₪')}
+        <div class="section-label">⛽ עלויות שנתיות</div>
+        ${fr(v.id,'fuel','דלק / טעינה',v.fuel*12,'₪/שנה')}
+        ${fr(v.id,'maintenance','טיפולים',v.maintenance,'₪/שנה')}
+        ${fr(v.id,'repairs','תיקונים',v.repairs,'₪/שנה')}
+        ${fr(v.id,'insurance','ביטוח',v.insurance,'₪/שנה')}
+        ${fr(v.id,'registration','רישוי + טסט',v.registration,'₪/שנה')}
+        <div class="section-label">📉 ירידת ערך</div>
+        ${fr(v.id,'depreciation','ירידת ערך שנתית',v.depreciation,'%')}
+        <div class="section-label">💳 מימון</div>
+        <div class="field-row">
+          <span class="field-label">כולל מימון</span>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+            <input type="checkbox" id="v${v.id}_financing" ${v.financing?'checked':''} onchange="recalc()" style="width:15px;height:15px;accent-color:var(--accent)">
+            <span style="font-size:12px">כן</span>
+          </label>
+        </div>
+        <div id="v${v.id}_perCarFields" style="display:${perCarMode?'':'none'}">
+          ${fr(v.id,'rate','ריבית שנתית',v.rate!=null?v.rate:5.5,'%')}
+          ${fr(v.id,'term','תקופת מימון',v.term!=null?v.term:5,'שנים')}
+          ${fr(v.id,'down','מקדמה',v.down!=null?v.down:40000,'₪')}
+        </div>
+      </div>`;
+    grid.appendChild(card);
+    // Fix fuel display
+    setTimeout(()=>{ const el=document.getElementById('v'+v.id+'_fuel'); if(el) el.value=v.fuel*12; },0);
+  });
+  if(vehicles.length<5) {
+    const btn = document.createElement('div');
+    btn.className='add-vehicle-btn';
+    btn.innerHTML='<span style="font-size:28px">+</span><span>הוסף רכב להשוואה</span>';
+    btn.onclick=()=>addVehicle();
+    grid.appendChild(btn);
+  }
+}
+
+function fr(id,field,label,val,unit) {
+  return `<div class="field-row"><span class="field-label">${label}</span><div class="field-input-wrap"><input class="field-input" type="number" id="v${id}_${field}" value="${val}" min="0" oninput="recalc()"><span class="unit">${unit}</span></div></div>`;
+}
+
+function recalc() {
+  vehicles.forEach(v => {
+    const d=getVehicleData(v.id);
+    const fuelAnnual = d.fuel;
+    Object.assign(v, d);
+    v.fuel = fuelAnnual/12;
+  });
+  renderCompare(); renderDep();
+}
+
+function toggleFinancingMode() {
+  const perCar = document.getElementById('perCarFinancing').checked;
+  ['gf-rate','gf-term','gf-down'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.style.display = perCar ? 'none' : '';
+  });
+  vehicles.forEach(v => {
+    const el = document.getElementById('v'+v.id+'_perCarFields');
+    if(el) el.style.display = perCar ? '' : 'none';
+  });
+  recalc();
+}
+
+function renderCompare() {
+  const g=getGlobal();
+  const calcs=vehicles.map(v=>({v,c:calcVehicle(v)}));
+  if(!calcs.length) {
+    document.getElementById('summaryCards').innerHTML='<div class="empty-state"><div style="font-size:40px">🚗</div><p>הוסף רכבים בלשונית "הזנת נתונים"</p></div>';
+    ['totalCostChart','annualBreakChart','compTable'].forEach(id=>document.getElementById(id).innerHTML='');
+    return;
+  }
+  const maxTotal=Math.max(...calcs.map(x=>x.c.totalCost));
+  const minTotal=Math.min(...calcs.map(x=>x.c.totalCost));
+
+  document.getElementById('summaryCards').innerHTML=calcs.map((x,i)=>{
+    const {v,c}=x, color=COLORS[i%COLORS.length];
+    const best=c.totalCost===minTotal;
+    return `<div class="summary-card" style="border-top:3px solid ${color}">
+      <div class="sc-name">🚗 ${v.name}</div>
+      <div class="sc-total" style="color:${color}">₪${fmt(c.totalCost)}</div>
+      <div class="sc-sub">עלות כוללת ל-${g.holdYears} שנים</div>
+      <div class="sc-sub">₪${fmt(c.annualTotal)} לשנה &nbsp;|&nbsp; ₪${fmt(c.annualTotal/12)} לחודש</div>
+      <div class="sc-sub">ערך במכירה: ₪${fmt(c.saleValue)}</div>
+      ${best&&calcs.length>1?'<span class="badge badge-green">✓ הזול ביותר</span>':''}
+    </div>`;
+  }).join('');
+
+  const maxOp=Math.max(...calcs.map(x=>x.c.annualOp));
+  document.getElementById('totalCostChart').innerHTML=calcs.map((x,i)=>{
+    const {v,c}=x,color=COLORS[i%COLORS.length],pct=(c.totalCost/maxTotal*100).toFixed(1);
+    return `<div class="bar-row"><span class="bar-name">${v.name}</span><div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${color}">₪${fmt(c.totalCost)}</div></div></div>`;
+  }).join('');
+  document.getElementById('annualBreakChart').innerHTML=calcs.map((x,i)=>{
+    const {v,c}=x,color=COLORS[i%COLORS.length],pct=(c.annualOp/maxOp*100).toFixed(1);
+    return `<div class="bar-row"><span class="bar-name">${v.name}</span><div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${color}">₪${fmt(c.annualOp)}</div></div></div>`;
+  }).join('');
+
+  const rows=[
+    {s:'💰 רכישה ומימון'},
+    {l:'מחיר רכישה',k:(v,c)=>v.price},
+    {l:'הלוואה',k:(v,c)=>c.loan},
+    {l:'עלות מימון כוללת',k:(v,c)=>c.totalFinancing},
+    {l:'תשלום חודשי',k:(v,c)=>c.monthlyPayment},
+    {s:'⛽ תפעול שנתי'},
+    {l:'דלק / טעינה',k:(v,c)=>v.fuel*12},
+    {l:'טיפולים',k:(v,c)=>v.maintenance},
+    {l:'תיקונים',k:(v,c)=>v.repairs},
+    {l:'ביטוח',k:(v,c)=>v.insurance},
+    {l:'רישוי + טסט',k:(v,c)=>v.registration},
+    {l:'סה"כ תפעול שנתי',k:(v,c)=>c.annualOp,b:1},
+    {s:'📉 ירידת ערך'},
+    {l:'אחוז שנתי',k:(v,c)=>v.depreciation+'%',raw:1},
+    {l:`ירידת ערך ל-${g.holdYears} שנים`,k:(v,c)=>c.totalDepreciation},
+    {l:'ערך צפוי במכירה',k:(v,c)=>c.saleValue},
+    {s:'📊 סיכום'},
+    {l:`סה"כ תפעול ל-${g.holdYears} שנים`,k:(v,c)=>c.totalOp},
+    {l:'סה"כ ירידת ערך',k:(v,c)=>c.totalDepreciation},
+    {l:'סה"כ מימון',k:(v,c)=>c.totalFinancing},
+    {l:`עלות כוללת ל-${g.holdYears} שנים`,k:(v,c)=>c.totalCost,total:1},
+    {l:'עלות שנתית',k:(v,c)=>c.annualTotal,b:1},
+    {l:'עלות חודשית',k:(v,c)=>c.annualTotal/12,b:1},
+  ];
+
+  const thead=`<tr><th>פריט</th>${calcs.map((x,i)=>`<th style="color:${COLORS[i%COLORS.length]}">${x.v.name}</th>`).join('')}</tr>`;
+  const tbody=rows.map(r=>{
+    if(r.s) return `<tr class="section-row"><td colspan="${calcs.length+1}">${r.s}</td></tr>`;
+    const vals=calcs.map(x=>({raw:r.k(x.v,x.c)}));
+    let minV=Infinity,maxV=-Infinity;
+    if(!r.raw) vals.forEach(v=>{if(typeof v.raw==='number'){if(v.raw<minV)minV=v.raw;if(v.raw>maxV)maxV=v.raw;}});
+    const cells=vals.map((val,i)=>{
+      let cls='';
+      if(!r.raw&&typeof val.raw==='number'&&calcs.length>1){if(val.raw===minV)cls='best';else if(val.raw===maxV)cls='worst';}
+      const disp=r.raw?val.raw:`₪${fmt(val.raw)}`;
+      return `<td class="${cls}" ${r.b||r.total?'style="font-weight:700"':''}>${disp}</td>`;
+    }).join('');
+    return `<tr ${r.total?'class="total-row"':''}><td class="row-label">${r.l}</td>${cells}</tr>`;
+  }).join('');
+  document.getElementById('compTable').innerHTML=`<thead>${thead}</thead><tbody>${tbody}</tbody>`;
+}
+
+function renderDep() {
+  const g=getGlobal();
+  const maxYrs=12;
+  // Table
+  const table=document.getElementById('depTable');
+  if(!table) return;
+  const thead=`<tr><th>שנה</th>${vehicles.map((v,i)=>`<th style="color:${COLORS[i%COLORS.length]}">${v.name}</th>`).join('')}</tr>`;
+  let tbody='';
+  for(let y=0;y<=maxYrs;y++){
+    const cells=vehicles.map(v=>`<td>₪${fmt(v.price*Math.pow(1-v.depreciation/100,y))}</td>`).join('');
+    tbody+=`<tr><td class="row-label">שנה ${y}</td>${cells}</tr>`;
+  }
+  table.innerHTML=`<thead>${thead}</thead><tbody>${tbody}</tbody>`;
+
+  // Canvas
+  const canvas=document.getElementById('depCanvas');
+  if(!canvas||!vehicles.length) return;
+  const W=canvas.offsetWidth||700, H=220;
+  canvas.width=W; canvas.height=H;
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,W,H);
+  const maxP=Math.max(...vehicles.map(v=>v.price))||1;
+  const pad={top:16,bottom:36,left:14,right:120};
+  const cW=W-pad.left-pad.right, cH=H-pad.top-pad.bottom;
+
+  // Grid lines
+  ctx.strokeStyle='#1e2a42'; ctx.lineWidth=1;
+  for(let i=0;i<=4;i++){
+    const yy=pad.top+(i/4)*cH;
+    ctx.beginPath();ctx.moveTo(pad.left,yy);ctx.lineTo(W-pad.right,yy);ctx.stroke();
+    ctx.fillStyle='#6b7a9a';ctx.font='9px Space Mono,monospace';
+    ctx.fillText('₪'+fmt(maxP*(1-i/4)),W-pad.right+4,yy+3);
+  }
+
+  // Lines
+  vehicles.forEach((v,idx)=>{
+    const color=COLORS[idx%COLORS.length];
+    ctx.beginPath();ctx.strokeStyle=color;ctx.lineWidth=2.5;
+    for(let y=0;y<=maxYrs;y++){
+      const val=v.price*Math.pow(1-v.depreciation/100,y);
+      const x=pad.left+(y/maxYrs)*cW, yy=pad.top+cH-(val/maxP)*cH;
+      y===0?ctx.moveTo(x,yy):ctx.lineTo(x,yy);
+    }
+    ctx.stroke();
+    // Legend
+    ctx.fillStyle=color;ctx.fillRect(W-pad.right+4,18+idx*18,10,2);
+    ctx.fillStyle='#e8edf8';ctx.font='11px Heebo,sans-serif';
+    ctx.fillText(v.name,W-pad.right+18,22+idx*18);
+  });
+
+  // X labels
+  ctx.fillStyle='#6b7a9a';ctx.font='9px Space Mono,monospace';
+  for(let y=0;y<=maxYrs;y+=2){
+    const x=pad.left+(y/maxYrs)*cW;
+    ctx.fillText('שנה '+y,x-12,H-6);
+  }
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach((t,i)=>{
+    t.classList.toggle('active',['input','compare','depreciation'][i]===tab);
+  });
+  document.getElementById('tab-input').style.display=tab==='input'?'':'none';
+  document.getElementById('tab-compare').style.display=tab==='compare'?'':'none';
+  document.getElementById('tab-depreciation').style.display=tab==='depreciation'?'':'none';
+  if(tab!=='input') { recalc(); if(tab==='depreciation') setTimeout(renderDep,60); }
+}
+
+function loadSample() {
+  vehicles=[]; nextId=1;
+  addVehicle({name:'טסלה מודל Y',price:220000,fuel:200,maintenance:1500,repairs:1000,insurance:5000,registration:1200,depreciation:12,financing:true});
+  addVehicle({name:'טויוטה RAV4',price:170000,fuel:700,maintenance:3000,repairs:2000,insurance:4500,registration:1200,depreciation:9,financing:true});
+  addVehicle({name:'סילברדו EV',price:310000,fuel:350,maintenance:2000,repairs:1500,insurance:6500,registration:1400,depreciation:18,financing:true});
+}
+
+// ===== SAVE / LOAD =====
+const STORAGE_KEY = 'vehicle_comparison_saves';
+
+function getAllSaves() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}'); } catch(e) { return {}; }
+}
+
+function getSnapshot() {
+  // Sync current UI values into vehicles array first
+  vehicles.forEach(v => {
+    const d = getVehicleData(v.id);
+    const fuelAnnual = d.fuel;
+    Object.assign(v, d);
+    v.fuel = fuelAnnual / 12;
+  });
+  return {
+    vehicles: vehicles.map(v=>({...v})),
+    global: {
+      rate: document.getElementById('globalRate').value,
+      term: document.getElementById('globalTerm').value,
+      downPct: document.getElementById('globalDown').value,
+      holdYears: document.getElementById('holdYears').value,
+      perCarFinancing: document.getElementById('perCarFinancing').checked,
+    },
+    savedAt: new Date().toLocaleString('he-IL')
+  };
+}
+
+function applySnapshot(snap) {
+  vehicles = []; nextId = 1;
+  document.getElementById('globalRate').value = snap.global.rate;
+  document.getElementById('globalTerm').value = snap.global.term;
+  document.getElementById('globalDown').value = snap.global.downPct;
+  document.getElementById('holdYears').value = snap.global.holdYears;
+  const perCar = !!snap.global.perCarFinancing;
+  document.getElementById('perCarFinancing').checked = perCar;
+  ['gf-rate','gf-term','gf-down'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.style.display = perCar ? 'none' : '';
+  });
+  snap.vehicles.forEach(v => addVehicle(v));
+}
+
+function doSave() {
+  const name = document.getElementById('saveNameInput').value.trim() || 'השוואה '+new Date().toLocaleDateString('he-IL');
+  const saves = getAllSaves();
+  saves[name] = getSnapshot();
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(saves));
+  document.getElementById('saveBarStatus').textContent = 'נשמר: '+name;
+  closeModals();
+  showToast('✓ נשמר בהצלחה: '+name);
+}
+
+function deleteSave(name) {
+  const saves = getAllSaves();
+  delete saves[name];
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(saves));
+  renderExistingSlots();
+  renderLoadSlots();
+  showToast('🗑 נמחק: '+name);
+}
+
+function loadSave(name) {
+  const saves = getAllSaves();
+  if(!saves[name]) return;
+  applySnapshot(saves[name]);
+  document.getElementById('saveBarStatus').textContent = 'נטען: '+name;
+  closeModals();
+  showToast('📂 נטען: '+name);
+}
+
+function openSaveModal() {
+  document.getElementById('saveNameInput').value = '';
+  renderExistingSlots();
+  document.getElementById('saveModal').classList.add('open');
+}
+
+function openLoadModal() {
+  renderLoadSlots();
+  document.getElementById('loadModal').classList.add('open');
+}
+
+function closeModals() {
+  document.querySelectorAll('.modal-overlay').forEach(m=>m.classList.remove('open'));
+}
+
+function renderExistingSlots() {
+  const saves = getAllSaves();
+  const names = Object.keys(saves);
+  const container = document.getElementById('existingSlotsContainer');
+  if(!names.length) { container.innerHTML='<p style="font-size:12px;color:var(--muted);margin-bottom:12px">אין שמירות קיימות</p>'; return; }
+  container.innerHTML = '<p style="font-size:11px;color:var(--muted);margin-bottom:8px">שמירות קיימות (לחץ לדריסה):</p>' +
+    names.map(n=>`
+      <div class="modal-slot" onclick="confirmOverwrite('${n.replace(/'/g,"\\'")}')">
+        <div><div class="slot-name">${n}</div><div class="slot-meta">${saves[n].savedAt||''} · ${saves[n].vehicles?.length||0} רכבים</div></div>
+        <div class="slot-del" onclick="event.stopPropagation();deleteSave('${n.replace(/'/g,"\\'")}')">✕</div>
+      </div>`).join('');
+}
+
+function confirmOverwrite(name) {
+  if(confirm('לדרוס את השמירה "'+name+'"?')) {
+    const saves = getAllSaves();
+    saves[name] = getSnapshot();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(saves));
+    document.getElementById('saveBarStatus').textContent = 'נשמר: '+name;
+    closeModals();
+    showToast('✓ עודכן: '+name);
+  }
+}
+
+function renderLoadSlots() {
+  const saves = getAllSaves();
+  const names = Object.keys(saves);
+  const el = document.getElementById('loadSlots');
+  if(!names.length) { el.innerHTML='<p style="font-size:13px;color:var(--muted)">אין שמירות קיימות עדיין</p>'; return; }
+  el.innerHTML = names.map(n=>`
+    <div class="modal-slot" onclick="loadSave('${n.replace(/'/g,"\\'")}')">
+      <div><div class="slot-name">${n}</div><div class="slot-meta">${saves[n].savedAt||''} · ${saves[n].vehicles?.length||0} רכבים</div></div>
+      <div class="slot-del" onclick="event.stopPropagation();deleteSave('${n.replace(/'/g,"\\'")}')">✕</div>
+    </div>`).join('');
+}
+
+function exportJSON() {
+  const snap = getSnapshot();
+  const blob = new Blob([JSON.stringify(snap, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'השוואת_רכבים_'+ new Date().toLocaleDateString('he-IL').replace(/\//g,'-') +'.json';
+  a.click();
+  showToast('⬇ קובץ יוצא');
+}
+
+function importJSON(event) {
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const snap = JSON.parse(e.target.result);
+      if(!snap.vehicles || !snap.global) throw new Error('פורמט לא תקין');
+      applySnapshot(snap);
+      document.getElementById('saveBarStatus').textContent = 'יובא מקובץ';
+      showToast('✓ יובא בהצלחה');
+    } catch(err) { alert('שגיאה בייבוא: '+err.message); }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2500);
+}
+
+// Close modals on overlay click
+document.addEventListener('click', e => {
+  if(e.target.classList.contains('modal-overlay')) closeModals();
+});
+
+loadSample();
+</script>
+</body>
+</html>
