@@ -111,6 +111,10 @@
   .modal-new-save { display:flex; gap:8px; margin-bottom:14px; }
   .modal-new-save input { flex:1; background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:7px 10px; color:var(--text); font-family:'Heebo',sans-serif; font-size:13px; outline:none; text-align:right; }
   .modal-new-save input:focus { border-color:var(--accent); }
+  .fin-mode-bar { display:flex; align-items:center; gap:12px; background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:10px 16px; margin-bottom:16px; flex-wrap:wrap; }
+  .fin-mode-tabs { display:flex; gap:4px; background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:3px; }
+  .fin-mode-tab { padding:6px 16px; border-radius:6px; border:none; background:transparent; color:var(--muted); font-family:'Heebo',sans-serif; font-size:13px; font-weight:700; cursor:pointer; transition:all 0.2s; }
+  .fin-mode-tab.active { background:var(--accent); color:white; }
 </style>
 </head>
 <body>
@@ -167,18 +171,27 @@
       <button class="btn-primary" onclick="addVehicle()">＋ הוסף רכב</button>
       <button class="btn-secondary" onclick="loadSample()">📎 טען דוגמה</button>
     </div>
-    <div class="vehicles-grid" id="vehiclesGrid"></div>
-    <div class="financing-section">
-      <div class="financing-title">💳 הגדרות מימון</div>
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
-        <input type="checkbox" id="perCarFinancing" onchange="toggleFinancingMode()" style="width:15px;height:15px;accent-color:var(--accent)">
-        <label for="perCarFinancing" style="font-size:13px;cursor:pointer">מימון נפרד לכל רכב</label>
+    <div class="fin-mode-bar">
+      <span style="font-size:12px;color:var(--muted);font-weight:600">סוג מימון:</span>
+      <div class="fin-mode-tabs">
+        <button class="fin-mode-tab active" id="fmGlobal" onclick="setFinancingMode('global')">🌐 מימון גלובלי</button>
+        <button class="fin-mode-tab" id="fmPerCar" onclick="setFinancingMode('percar')">🚗 מימון לכל רכב</button>
       </div>
+      <div style="margin-right:auto;display:flex;align-items:center;gap:8px">
+        <span style="font-size:12px;color:var(--muted)">שנות החזקה:</span>
+        <div class="field-input-wrap" style="width:90px">
+          <input class="field-input" type="number" id="holdYears" value="5" min="1" max="15" oninput="recalc()">
+          <span class="unit">שנים</span>
+        </div>
+      </div>
+    </div>
+    <div class="vehicles-grid" id="vehiclesGrid"></div>
+    <div class="financing-section" id="globalFinancingSection">
+      <div class="financing-title">💳 הגדרות מימון גלובליות</div>
       <div class="financing-grid">
-        <div class="fin-field" id="gf-rate"><label>ריבית שנתית (%)</label><div class="field-input-wrap"><input class="field-input" type="number" id="globalRate" value="5.5" step="0.1" oninput="recalc()"><span class="unit">%</span></div></div>
-        <div class="fin-field" id="gf-term"><label>תקופת מימון (שנים)</label><div class="field-input-wrap"><input class="field-input" type="number" id="globalTerm" value="5" min="1" max="10" oninput="recalc()"><span class="unit">שנים</span></div></div>
-        <div class="fin-field" id="gf-down"><label>מקדמה (₪)</label><div class="field-input-wrap"><input class="field-input" type="number" id="globalDown" value="40000" min="0" oninput="recalc()"><span class="unit">₪</span></div></div>
-        <div class="fin-field"><label>שנות החזקה להשוואה</label><div class="field-input-wrap"><input class="field-input" type="number" id="holdYears" value="5" min="1" max="15" oninput="recalc()"><span class="unit">שנים</span></div></div>
+        <div class="fin-field"><label>ריבית שנתית (%)</label><div class="field-input-wrap"><input class="field-input" type="number" id="globalRate" value="5.5" step="0.1" oninput="recalc()"><span class="unit">%</span></div></div>
+        <div class="fin-field"><label>תקופת מימון (שנים)</label><div class="field-input-wrap"><input class="field-input" type="number" id="globalTerm" value="5" min="1" max="10" oninput="recalc()"><span class="unit">שנים</span></div></div>
+        <div class="fin-field"><label>מקדמה (₪)</label><div class="field-input-wrap"><input class="field-input" type="number" id="globalDown" value="40000" min="0" oninput="recalc()"><span class="unit">₪</span></div></div>
       </div>
     </div>
     <button class="btn-primary" onclick="switchTab('compare')">📊 צפה בהשוואה →</button>
@@ -210,7 +223,7 @@
 
 <script>
 const COLORS = ['#3b82f6','#f59e0b','#10b981','#a855f7','#ef4444','#06b6d4'];
-let vehicles = [], nextId = 1;
+let vehicles = [], nextId = 1, financingMode = 'global';
 const fmt = n => Math.round(n).toLocaleString('he-IL');
 
 function getGlobal() {
@@ -255,7 +268,7 @@ function getVehicleData(id) {
 
 function calcVehicle(v) {
   const g = getGlobal();
-  const perCar = document.getElementById('perCarFinancing')?.checked;
+  const perCar = financingMode === 'percar';
   const rate = (perCar && v.rate != null) ? v.rate : g.rate;
   const term = (perCar && v.term != null) ? v.term : g.term;
   const down = (perCar && v.down != null) ? v.down : g.downPct;
@@ -277,7 +290,7 @@ function calcVehicle(v) {
 function renderVehicles() {
   const grid = document.getElementById('vehiclesGrid');
   grid.innerHTML = '';
-  const perCarMode = document.getElementById('perCarFinancing')?.checked;
+  const perCarMode = financingMode === 'percar';
   vehicles.forEach((v,idx)=>{
     const color = COLORS[idx%COLORS.length];
     const card = document.createElement('div');
@@ -343,16 +356,19 @@ function recalc() {
   renderCompare(); renderDep();
 }
 
-function toggleFinancingMode() {
-  const perCar = document.getElementById('perCarFinancing').checked;
-  ['gf-rate','gf-term','gf-down'].forEach(id => {
-    const el = document.getElementById(id);
-    if(el) el.style.display = perCar ? 'none' : '';
-  });
+function setFinancingMode(mode) {
+  financingMode = mode;
+  document.getElementById('fmGlobal').classList.toggle('active', mode === 'global');
+  document.getElementById('fmPerCar').classList.toggle('active', mode === 'percar');
+  const sec = document.getElementById('globalFinancingSection');
+  if(sec) sec.style.display = mode === 'global' ? '' : 'none';
   vehicles.forEach(v => {
-    const el = document.getElementById('v'+v.id+'_perCarFields');
-    if(el) el.style.display = perCar ? '' : 'none';
+    const d = getVehicleData(v.id);
+    const fuelAnnual = d.fuel;
+    Object.assign(v, d);
+    v.fuel = fuelAnnual / 12;
   });
+  renderVehicles();
   recalc();
 }
 
@@ -530,7 +546,7 @@ function getSnapshot() {
       term: document.getElementById('globalTerm').value,
       downPct: document.getElementById('globalDown').value,
       holdYears: document.getElementById('holdYears').value,
-      perCarFinancing: document.getElementById('perCarFinancing').checked,
+      financingMode: financingMode,
     },
     savedAt: new Date().toLocaleString('he-IL')
   };
@@ -542,12 +558,12 @@ function applySnapshot(snap) {
   document.getElementById('globalTerm').value = snap.global.term;
   document.getElementById('globalDown').value = snap.global.downPct;
   document.getElementById('holdYears').value = snap.global.holdYears;
-  const perCar = !!snap.global.perCarFinancing;
-  document.getElementById('perCarFinancing').checked = perCar;
-  ['gf-rate','gf-term','gf-down'].forEach(id => {
-    const el = document.getElementById(id);
-    if(el) el.style.display = perCar ? 'none' : '';
-  });
+  const mode = snap.global.financingMode || (snap.global.perCarFinancing ? 'percar' : 'global');
+  financingMode = mode;
+  document.getElementById('fmGlobal').classList.toggle('active', mode === 'global');
+  document.getElementById('fmPerCar').classList.toggle('active', mode === 'percar');
+  const sec = document.getElementById('globalFinancingSection');
+  if(sec) sec.style.display = mode === 'global' ? '' : 'none';
   snap.vehicles.forEach(v => addVehicle(v));
 }
 
