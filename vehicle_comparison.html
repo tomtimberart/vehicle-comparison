@@ -291,7 +291,8 @@ function calcVehicle(v) {
     remainingLoan = r === 0 ? monthlyPayment * remainingPayments : monthlyPayment * (1 - Math.pow(1+r, -remainingPayments)) / r;
     remainingLoan = Math.max(0, remainingLoan);
   }
-  return {annualOp, totalOp:annualOp*g.holdYears, totalFinancing, monthlyPayment, loan, totalDepreciation, saleValue:cv, totalCost, annualTotal:totalCost/g.holdYears, walkAway:cv - remainingLoan};
+  const dealTotal = v.price + annualOp*g.holdYears + totalFinancing;
+  return {annualOp, totalOp:annualOp*g.holdYears, totalFinancing, monthlyPayment, loan, totalDepreciation, saleValue:cv, totalCost, annualTotal:totalCost/g.holdYears, walkAway:cv - remainingLoan, dealTotal};
 }
 
 function renderVehicles() {
@@ -407,6 +408,11 @@ function renderCompare() {
       <div class="sc-sub">₪${fmt(c.annualTotal)} לשנה &nbsp;|&nbsp; ₪${fmt(c.annualTotal/12)} לחודש</div>
       <div class="sc-sub">ערך במכירה: <span style="color:${saleColor};font-weight:700">₪${fmt(c.saleValue)}</span></div>
       ${best&&multi?'<span class="badge badge-green">✓ הזול ביותר</span>':''}
+      <div style="border-top:1px solid var(--border);margin-top:10px;padding-top:10px">
+        <div class="sc-sub" style="margin-bottom:6px">סך ערך העסקה</div>
+        <div style="font-size:20px;font-weight:800;font-family:'Space Mono',monospace;color:var(--accent2)">₪${fmt(c.dealTotal)}</div>
+        <div class="sc-sub" style="margin-top:2px">רכישה + תפעול + מימון</div>
+      </div>
       <div style="border-top:1px solid var(--border);margin-top:10px;padding-top:10px">
         <div class="sc-sub">כסף שיישאר בידי לאחר מכירה</div>
         <div style="font-size:20px;font-weight:800;font-family:'Space Mono',monospace;margin-top:4px;color:${walkColor}">₪${fmt(c.walkAway)}</div>
