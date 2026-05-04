@@ -430,7 +430,6 @@ function renderCompare() {
     {l:'הלוואה',k:(v,c)=>c.loan},
     {l:'עלות מימון כוללת',k:(v,c)=>c.totalFinancing},
     {l:'תשלום חודשי',k:(v,c)=>c.monthlyPayment},
-    {l:'תזרים חודשי (החזר + תפעול)',k:(v,c)=>c.monthlyPayment + c.annualOp/12,b:1},
     {s:'⛽ תפעול שנתי'},
     {l:'דלק / טעינה',k:(v,c)=>v.fuel*12},
     {l:'טיפולים',k:(v,c)=>v.maintenance},
@@ -449,6 +448,7 @@ function renderCompare() {
     {l:`עלות כוללת ל-${g.holdYears} שנים`,k:(v,c)=>c.totalCost,total:1},
     {l:'עלות שנתית',k:(v,c)=>c.annualTotal,b:1},
     {l:'עלות חודשית',k:(v,c)=>c.annualTotal/12,b:1},
+    {l:'תזרים חודשי (החזר + תפעול)',k:(v,c)=>c.monthlyPayment + c.annualOp/12,b:1},
   ];
 
   const thead=`<tr><th>פריט</th>${calcs.map((x,i)=>`<th style="color:${COLORS[i%COLORS.length]}">${x.v.name}</th>`).join('')}</tr>`;
